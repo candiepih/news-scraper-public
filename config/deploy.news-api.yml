@@ -1,0 +1,72 @@
+# Name of your application. Used to uniquely configure containers.
+service: news-api
+
+# Name of the container image.
+image: candiepih/news-api
+
+# Deploy to these servers.
+servers:
+  web:
+    labels:
+      traefik.http.routers.domain.rule: Host(`news-api.alexnjagi.com`)
+      traefik.http.routers.domain.entrypoints: websecure
+      traefik.http.routers.domain.tls.certresolver: letsencrypt
+
+# Inject ENV variables into containers (secrets come from .env).
+# Remember to run `kamal env push` after making changes!
+env:
+  # clear:
+  secret:
+    - SECRET_KEY
+    - APP_ENV
+    - API_URL
+    - MONGO_DB_NAME
+    - MONGO_DB_URI
+    - REDIS_URI
+    - REDIS_PASSWORD
+
+# Use accessory services (secrets come from .env).
+accessories:
+  redis:
+    image: redis:7.2.3-alpine
+    roles:
+      - web
+    cmd: "/bin/sh -c 'redis-server --requirepass $REDIS_PASSWORD --port 6379'"
+    env:
+      secret:
+        - REDIS_PASSWORD
+    directories:
+      - /var/lib/redis:/data
+    options:
+      network: "news-scraper"
+
+# Configure custom arguments for Traefik. Be sure to reboot traefik when you modify it.
+traefik:
+  image: traefik:v3.0
+  publish: false
+  options:
+    publish:
+      - "80:80"
+      - "443:443"
+    volume:
+      - "/etc/traefik/acme/:/etc/traefik/acme/"
+    network: "news-scraper"
+    # memory: 500m
+  args:
+    entryPoints.web.address: ":80"
+    entryPoints.websecure.address: ":443"
+    entryPoints.web.http.redirections.entryPoint.to: websecure
+    entryPoints.web.http.redirections.entryPoint.scheme: https
+    entryPoints.web.http.redirections.entrypoint.permanent: true
+    entrypoints.websecure.http.tls: true
+    certificatesResolvers.letsencrypt.acme.email: "contact@alexnjagi.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/etc/traefik/acme/"
+    certificatesResolvers.letsencrypt.acme.httpchallenge: true
+    certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
+
+# Configure a custom healthcheck (default is /up on port 3000)
+healthcheck:
+  path: /articles/categories
+  port: 8000
+  interval: 30s
+  max_attempts: 15

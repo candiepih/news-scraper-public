@@ -1,0 +1,5 @@
+from .entertainment_serializer import EntertainmentSerializer
+from .gaming_serializer import VideoGamesSerializer
+from .global_news_serializer import GlobalNewsSerializer
+from .sports_serializer import SportsSerializer
+from .technology_serializer import TechnologySerializer

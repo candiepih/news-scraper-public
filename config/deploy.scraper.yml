@@ -1,0 +1,41 @@
+# Name of your application. Used to uniquely configure containers.
+service: scraper-bot
+
+# Name of the container image.
+image: candiepih/news-scraper
+
+# Deploy to these servers.
+servers:
+  web:
+    traefik: false
+    healthcheck:
+      path: /daemonstatus.json
+      port: 6800
+      interval: 30s
+      max_attempts: 15
+
+# Inject ENV variables into containers (secrets come from .env).
+# Remember to run `kamal env push` after making changes!
+env:
+  # clear:
+  secret:
+    - MONGO_DB_NAME
+    - MONGO_DB_URI
+
+accessories:
+  scraper-cron:
+    image: candiepih/news-scraper:cron
+    roles:
+      - web
+    env:
+      secret:
+        - SCRAPYD_HOST_URL
+    options:
+      network: "news-scraper"
+
+# Configure a custom healthcheck (default is /up on port 3000)
+healthcheck:
+  path: /daemonstatus.json
+  port: 6800
+  interval: 30s
+  max_attempts: 15

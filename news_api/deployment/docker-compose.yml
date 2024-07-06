@@ -1,0 +1,20 @@
+services:
+  app:
+    image: candiepih/news-api:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+  redis:
+    image: redis:7.2.3-alpine
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - redis_storage:/usr/share/redis/data
+volumes:
+  redis_storage:
+    driver: local

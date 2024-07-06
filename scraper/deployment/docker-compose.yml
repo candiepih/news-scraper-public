@@ -1,0 +1,16 @@
+services:
+  scraper:
+    image: candiepih/news-scraper:bot
+    ports:
+      - "6800:6800"
+    env_file:
+      - ../.env
+  scraper_cron:
+    image: candiepih/news-scraper:cron
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      - scraper
+volumes:
+    scraper:
